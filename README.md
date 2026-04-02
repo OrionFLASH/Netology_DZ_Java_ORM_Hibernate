@@ -14,6 +14,19 @@
 | `Docs/` | Формулировка задания и дополнительные материалы |
 | `log/` | Файлы логов (создаётся при запуске; не коммитить содержимое) |
 | `pom.xml` | Зависимости и сборка Maven |
+| `src/test/java/.../PersonDaoIntegrationTest.java` | Интеграционный тест CRUD (JUnit 5) |
+
+## Соответствие заданию (`Docs/ASSIGNMENT.md`)
+
+| Требование | Реализация |
+|------------|------------|
+| Maven, Hibernate и драйвер СУБД | `pom.xml`: `hibernate-core`, H2 |
+| Сущность с JPA-аннотациями | `Person`: `@Entity`, `@Table`, `@Id`, `@GeneratedValue`, `@Column` |
+| DAO с `Session` и транзакциями | `PersonDao`: `openSession`, `beginTransaction`, commit/rollback |
+| Сценарий: сохранение, список, обновление, удаление | `Main.runCrudDemo`, дублируется проверками в `PersonDaoIntegrationTest` |
+| Логирование этапов | SLF4J + Logback: консоль и файлы в `log/` |
+
+**Критерии приёмки из задания:** сборка `mvn -q -DskipTests package` (или полный цикл с тестами `mvn -q test`); запуск `mvn -q exec:java` без необработанных исключений; в консоли и логах видны операции с БД. На дату обновления документации все перечисленные команды выполнялись успешно (код выхода 0).
 
 ## Установка и запуск
 
@@ -28,6 +41,14 @@
 mvn -q package
 ```
 
+### Автоматические тесты
+
+Проверка сценария CRUD на той же in-memory H2, что и основное приложение:
+
+```bash
+mvn -q test
+```
+
 ### Запуск демонстрационного приложения
 
 Из корня репозитория:
@@ -40,9 +61,10 @@ mvn -q exec:java
 
 ### Проверка вручную
 
-1. Выполнить `mvn -q exec:java` — завершение с кодом 0, без stack trace.
-2. Убедиться, что в логах есть сообщения об сохранении, обновлении и удалении записи.
-3. При необходимости сравнить поведение с формулировкой в `Docs/ASSIGNMENT.md`.
+1. Выполнить `mvn -q test` — все тесты зелёные.
+2. Выполнить `mvn -q exec:java` — код выхода 0, без необработанных исключений в выводе.
+3. Просмотреть `log/INFO_hibernate_app*.log` и при необходимости `DEBUG_*` — должны быть сообщения о сохранении, обновлении и удалении.
+4. Сверить требования с таблицей в разделе «Соответствие заданию» и с `Docs/ASSIGNMENT.md`.
 
 ## Описание классов и функций
 
@@ -65,6 +87,10 @@ Person p = new Person("Иван Сидоров", "ivan@example.com");
 
 - **`getSessionFactory()`** — возвращает единственный `SessionFactory` (ленивая инициализация).
 - **`shutdown()`** — закрывает фабрику при завершении JVM-приложения.
+
+### `ru.netology.orm.hibernate.PersonDaoIntegrationTest` (тесты)
+
+- **`crudScenarioPersistsUpdatesAndDeletes()`** — один интеграционный сценарий: два `save`, `findAll` (размер 2), `update`, `deleteById`, проверка отсутствия удалённой записи.
 
 ### `ru.netology.orm.hibernate.dao.PersonDao`
 
@@ -91,4 +117,4 @@ Person saved = dao.save(new Person("Имя", "email@test.ru"));
 
 | Версия | Изменения |
 |--------|-----------|
-| 1.0.0-SNAPSHOT | Первичная инициализация: Maven, Hibernate 6, сущность `Person`, DAO, демо CRUD, логирование Logback, документация в `README.md` и `Docs/ASSIGNMENT.md`. |
+| 1.0.0-SNAPSHOT | Maven, Hibernate 6, сущность `Person`, DAO, демо в `Main`, Logback, `Docs/ASSIGNMENT.md`. Дополнено: интеграционный тест `PersonDaoIntegrationTest`, Surefire, матрица соответствия заданию в README и в `Docs/ASSIGNMENT.md`, обновлены инструкции проверки. |
